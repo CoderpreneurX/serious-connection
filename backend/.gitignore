@@ -3,3 +3,9 @@ venv/
 
 # Pycache
 __pycache__/
+
+# Env Files
+.env
+
+# SQLite Databases
+*.db
