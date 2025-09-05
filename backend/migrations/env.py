@@ -1,3 +1,4 @@
+# alembic/env.py
 from logging.config import fileConfig
 import importlib
 import pkgutil
@@ -7,7 +8,7 @@ import sys
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
-# Import your core stuff
+# Import core stuff
 from core.config import settings
 from core.database import Base
 
@@ -33,17 +34,26 @@ for _, module_name, _ in pkgutil.iter_modules([str(BASE_DIR / "modules")]):
     except ModuleNotFoundError:
         pass
 
-# Now Alembic knows about all metadata
+# Metadata for Alembic
 target_metadata = Base.metadata
 
 # -------------------------------------------------------------------
-# Database URL from our config
+# Database URL for Alembic (sync version)
 # -------------------------------------------------------------------
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# If your app uses async engines (sqlite+aiosqlite or postgresql+asyncpg),
+# remove the async part for Alembic so migrations run sync.
+db_url = settings.DATABASE_URL
+if "+aiosqlite" in db_url:
+    db_url = db_url.replace("+aiosqlite", "")
+elif "+asyncpg" in db_url:
+    db_url = db_url.replace("+asyncpg", "")
 
+config.set_main_option("sqlalchemy.url", db_url)
 
+# -------------------------------------------------------------------
+# Offline migrations
+# -------------------------------------------------------------------
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -51,26 +61,26 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
-
     with context.begin_transaction():
         context.run_migrations()
 
-
+# -------------------------------------------------------------------
+# Online migrations (synchronous)
+# -------------------------------------------------------------------
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode."""
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
-
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
-
         with context.begin_transaction():
             context.run_migrations()
 
-
+# -------------------------------------------------------------------
+# Run
+# -------------------------------------------------------------------
 if context.is_offline_mode():
     run_migrations_offline()
 else:

@@ -1,7 +1,7 @@
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-DEV_DATABASE_URL = "sqlite:///./dev.db"
+DEV_DATABASE_URL = "sqlite+aiosqlite:///./dev.db"
 
 
 class Settings(BaseSettings):
