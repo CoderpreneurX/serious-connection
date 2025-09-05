@@ -1,6 +1,7 @@
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
-from .exceptions import JSONException
+from .email import test_send_email
 
 # Import module routers here
 # from modules.auth.routes import router as auth_router
@@ -13,7 +14,8 @@ api_router = APIRouter()
 # Health check route
 @api_router.get("/ping", tags=["health"])
 async def ping():
-    raise JSONException(message={"title": "Hello", "description": "Sorry bruh, I can't!"}, status_code=400)
+    await test_send_email()
+    return JSONResponse(content={"success": True, "message": "Pong!"})
 
 
 # Include module routers (uncomment when ready)
